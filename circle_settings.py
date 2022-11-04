@@ -29,6 +29,7 @@ INSTALLED_APPS = (
     'django.contrib.gis',
     'passive_data_kit',
     'passive_data_kit_detoxify'
+    'passive_data_kit_external_data',
 )
 
 MIDDLEWARE = (

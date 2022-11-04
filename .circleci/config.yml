@@ -39,14 +39,17 @@ jobs:
             mv ../passive_data_kit_detoxify pdk
             cd pdk
             git clone https://github.com/audacious-software/PassiveDataKit-Django.git passive_data_kit
+            git clone https://github.com/audacious-software/Passive-Data-Kit-External-Data.git passive_data_kit_external_data
             cp passive_data_kit_detoxify/circle_settings.py pdk/settings.py
             cp passive_data_kit_detoxify/.pylintrc .
             pylint passive_data_kit_detoxify
             pip install -r passive_data_kit/requirements.txt
+            pip install -r passive_data_kit_external_data/requirements.txt
             pip install -r passive_data_kit_detoxify/requirements.txt
             python manage.py migrate
             python manage.py test
             pylint passive_data_kit
+            pylint passive_data_kit_external_data
             bandit -r .      
       - save_cache:
           key: venv-38-{{ .Branch }}-{{ checksum "/home/circleci/django/pdk/passive_data_kit_detoxify/requirements.txt" }}
