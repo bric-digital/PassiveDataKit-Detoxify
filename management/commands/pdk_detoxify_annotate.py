@@ -28,7 +28,7 @@ class Command(BaseCommand):
         pass
 
     def handle(self, *args, **options): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
-        content = input('Enter the text to score: ')
+        content = input('Enter the text to score: ') # nosec
 
         results = annotate(content)
 
