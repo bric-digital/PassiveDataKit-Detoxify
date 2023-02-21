@@ -60,9 +60,8 @@ def annotate(content, field_name=None): # pylint: disable=too-many-branches, too
 def fetch_annotation_fields():
     labels = []
 
-    # for source in list(SentimentToken.objects.all().order_by('source').values_list('source', flat=True).distinct()):
-    #    for label in list(SentimentToken.objects.filter(source=source).order_by('label').values_list('label', flat=True).distinct()):
-    #        labels.append((source + '_' + label).lower())
+    for model in DETOXIFY_MODELS:
+        labels.append(slugify(model).replace('-', '_'))
 
     return labels
 
