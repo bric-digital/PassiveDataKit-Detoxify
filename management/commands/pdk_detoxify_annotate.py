@@ -11,15 +11,17 @@ from django.core.management.base import BaseCommand
 from ...annotators.pdk_detoxify_annotator import annotate
 
 class NumPyEncoder(json.JSONEncoder):
-    def default(self, obj): # pylint: disable=arguments-renamed
-        if isinstance(obj, numpy.integer):
-            return int(obj)
-        if isinstance(obj, numpy.floating):
-            # 👇️ alternatively use str()
-            return float(obj)
-        if isinstance(obj, numpy.ndarray):
-            return obj.tolist()
-        return json.JSONEncoder.default(self, obj)
+    def default(self, o): # pylint: disable=method-hidden
+        if isinstance(o, numpy.integer):
+            return int(o)
+
+        if isinstance(o, numpy.floating):
+            return float(o)
+
+        if isinstance(o, numpy.ndarray):
+            return o.tolist()
+
+        return json.JSONEncoder.default(self, o)
 
 class Command(BaseCommand):
     help = 'Generates Detoxify scores for the provided text.'

@@ -2,8 +2,11 @@
 
 from __future__ import print_function
 
-from detoxify import Detoxify
+import json
 
+import requests
+
+from django.conf import settings
 from django.utils.text import slugify
 
 SKIP_FIELD_NAMES = (
@@ -39,12 +42,46 @@ def annotate(content, field_name=None): # pylint: disable=too-many-branches, too
     if content is None:
         content = ''
 
+
     content = content.strip()
 
-    for model in DETOXIFY_MODELS:
-        model_scores = Detoxify(model).predict(content)
+    if len(content) == 0: # pylint: disable=len-as-condition
+        return {}
 
-        scores[slugify(model).replace('-', '_')] = model_scores
+    try:
+        data = {
+            's': content
+        }
+
+        response = requests.post(settings.SIMPLE_DETOXIFY_URL, data=data)
+
+        if response.ok:
+            remote_scores = response.json()
+
+            if 'to_score' in remote_scores:
+                try:
+                    if settings.SIMPLE_DETOXIFY_RETAIN_SCORED_TEXT is False:
+                        del remote_scores['to_score']
+                except AttributeError:
+                    del remote_scores['to_score']
+
+            for model in remote_scores:
+                scores[slugify(model).replace('-', '_')] = remote_scores[model]
+        else:
+            print('REMOTE ERROR: %s:\n%s' % (response.status_code, response.text))
+
+    except AttributeError:
+        from detoxify import Detoxify # pylint: disable=import-error
+
+        for model in DETOXIFY_MODELS:
+            model_scores = Detoxify(model).predict(content)
+
+            for key in model_scores:
+                model_scores[key] = float(model_scores[key])
+
+            scores[slugify(model).replace('-', '_')] = model_scores
+
+        print('GOT LOCAL: %s' % json.dumps(scores, indent=2))
 
     annotation_field = 'pdk_detoxify'
 
