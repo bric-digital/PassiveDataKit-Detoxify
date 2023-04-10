@@ -27,6 +27,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
+    'prettyjson',
     'passive_data_kit',
     'passive_data_kit_detoxify',
     'passive_data_kit_external_data',
@@ -91,6 +92,10 @@ USE_L10N = True
 
 USE_TZ = True
 
+PDK_EXTERNAL_CONTENT_PUBLIC_KEY = ''
+
+SIMPLE_DETOXIFY_URL = ''
+SIMPLE_DETOXIFY_RETAIN_SCORED_TEXT = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
