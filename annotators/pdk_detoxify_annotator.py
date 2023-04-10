@@ -53,7 +53,7 @@ def annotate(content, field_name=None): # pylint: disable=too-many-branches, too
             's': content
         }
 
-        response = requests.post(settings.SIMPLE_DETOXIFY_URL, data=data)
+        response = requests.post(settings.SIMPLE_DETOXIFY_URL, data=data, timeout=60)
 
         if response.ok:
             remote_scores = response.json()
@@ -71,7 +71,7 @@ def annotate(content, field_name=None): # pylint: disable=too-many-branches, too
             print('REMOTE ERROR: %s:\n%s' % (response.status_code, response.text))
 
     except AttributeError:
-        from detoxify import Detoxify # pylint: disable=import-error
+        from detoxify import Detoxify # pylint: disable=import-error, import-outside-toplevel
 
         for model in DETOXIFY_MODELS:
             model_scores = Detoxify(model).predict(content)
