@@ -94,7 +94,7 @@ USE_TZ = True
 
 PDK_EXTERNAL_CONTENT_PUBLIC_KEY = ''
 
-SIMPLE_DETOXIFY_URL = ''
+SIMPLE_DETOXIFY_URL = 'https://example.com/'
 SIMPLE_DETOXIFY_RETAIN_SCORED_TEXT = False
 
 # Static files (CSS, JavaScript, Images)
