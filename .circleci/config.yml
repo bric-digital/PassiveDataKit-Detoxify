@@ -88,6 +88,7 @@ jobs:
             . /home/circleci/venv/bin/activate
             pip install -U pip
             pip install wheel
+            pip install setuptools_rust
             pip install -r requirements.txt
             cd ..
             mv project passive_data_kit_detoxify
