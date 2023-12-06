@@ -76,7 +76,7 @@ def annotate(content, field_name=None): # pylint: disable=too-many-branches, too
         for model in DETOXIFY_MODELS:
             model_scores = Detoxify(model).predict(content)
 
-            for key in model_scores:
+            for key in model_scores.copy():
                 model_scores[key] = float(model_scores[key])
 
             scores[slugify(model).replace('-', '_')] = model_scores
@@ -103,63 +103,60 @@ def fetch_annotation_fields():
     return labels
 
 
-def fetch_annotations(properties, initial_field=None): # pylint: disable=unused-argument
-    #if isinstance(properties, dict) is False:
-    #    return None
+def fetch_annotations(properties, initial_field=None): # pylint: disable=too-many-return-statements, too-many-branches
+    if isinstance(properties, dict) is False:
+        return None
 
-    #field_priorities = DEFAULT_FIELD_PRIORITIES
+    field_priorities = DEFAULT_FIELD_PRIORITIES
 
-    #try:
-    #    field_priorities = settings.PDK_CONTENT_ANALYSIS_FIELD_PRIORITIES
-    #except AttributeError:
-    #    pass
+    try:
+        field_priorities = settings.PDK_CONTENT_ANALYSIS_FIELD_PRIORITIES
+    except AttributeError:
+        pass
 
-    #if initial_field is None:
-    #    for field in field_priorities:
-    #        sentiment_key = 'pdk_detoxify_' + field
+    if initial_field is None:
+        for field in field_priorities:
+            sentiment_key = 'pdk_detoxify_' + field
 
-    #        if sentiment_key in properties:
-    #            annotations = {}
+            if sentiment_key in properties:
+                annotations = {}
 
-    #            for model in properties[sentiment_key]:
-    #                for label in properties[sentiment_key][model]:
-    #                    annotations[(model + '_' + label).lower()] = properties[sentiment_key][model][label]
+                for model in properties[sentiment_key]:
+                    for label in properties[sentiment_key][model]:
+                        annotations[('%s_%s' % (model, label)).lower()] = properties.get(sentiment_key, {}).get(model, {}).get(label, '')
 
-    #            return annotations
+                return annotations
 
-    #        annotations = fetch_annotations(properties, field)
+            annotations = fetch_annotations(properties, field)
 
-    #        if annotations is not None:
-    #            return annotations
-    #else:
-    #    sentiment_key = 'pdk_detoxify_' + initial_field
+            if annotations is not None:
+                return annotations
+    else:
+        toxic_scores_key = 'pdk_detoxify_' + initial_field
 
-    #    if sentiment_key in properties:
-    #        annotations = {}
+        if sentiment_key in properties:
+            annotations = {}
 
-    #        for model in DETOXIFY_MODELS:
-    #            model_key = slugify(model).replace('-', '_')
+            for model in properties.get(toxic_scores_key, {}):
+                for label in properties.get(toxic_scores_key, {}).get(model, {}):
+                    annotations[('%s_%s' % (model, label)).lower()] = properties.get(sentiment_key, {}).get(model, {}).get(label, '')
 
-    #        for model in properties[sentiment_key]:
-    #            for label in properties[sentiment_key][model]:
-    #                annotations[(model + '_' + label).lower()] = properties[sentiment_key][model][label]
+            return annotations
 
-    #        return annotations
+        for key in properties:
+            value = properties[key]
 
-    #    for key in properties:
-    #        value = properties[key]
+            if isinstance(value, dict):
+                annotations = fetch_annotations(value, initial_field)
 
-    #        if isinstance(value, dict):
-    #            annotations = fetch_annotations(value, initial_field)
+                if annotations is not None:
+                    return annotations
 
-    #            if annotations is not None:
-    #                return annotations
+            elif isinstance(value, list):
+                for item in value:
+                    annotations = fetch_annotations(item, initial_field)
 
-    #        elif isinstance(value, list):
-    #            for item in value:
-    #                annotations = fetch_annotations(item, initial_field)
-
-    #                if annotations is not None:
-    #                    return annotations
+                    if annotations is not None:
+                        return annotations
 
     return None
