@@ -9,7 +9,6 @@ workflows:
       - build-39
       - build-38
       - build-37
-      - build-36
 
 jobs:
   build-39:
