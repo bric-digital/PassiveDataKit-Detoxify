@@ -6,15 +6,17 @@ orbs:
 workflows:
   build:
     jobs:
+      - build-312
+      - build-310
       - build-39
       - build-38
-      - build-27
+      - build-37
 
 jobs:
-  build-39:
+  build-312:
     docker:
-      - image: cimg/python:3.9
-      - image: cimg/postgres:9.6-postgis
+      - image: cimg/python:3.12
+      - image: cimg/postgres:14.19-postgis
         auth:
           username: mydockerhub-user
           password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
@@ -25,11 +27,11 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: venv-38-{{ .Branch }}-{{ checksum "requirements.txt" }}
+          key: venv-312-{{ .Branch }}-{{ checksum "requirements.txt" }}
       - run:
           name: Build and validate
           command: |
-            sudo apt-get update && sudo apt-get install -y gdal-bin
+            sudo apt-get update && sudo apt-get install -y gdal-bin rustc cargo
             python3 -m venv --copies /home/circleci/venv
             . /home/circleci/venv/bin/activate
             pip install -U pip
@@ -39,24 +41,126 @@ jobs:
             mv project passive_data_kit_detoxify
             mkdir django
             cd django
-            django-admin.py startproject pdk
+            django-admin startproject pdk
             mv ../passive_data_kit_detoxify pdk
             cd pdk
             git clone https://github.com/audacious-software/PassiveDataKit-Django.git passive_data_kit
             git clone https://github.com/audacious-software/Passive-Data-Kit-External-Data.git passive_data_kit_external_data
             cp passive_data_kit_detoxify/circle_settings.py pdk/settings.py
             cp passive_data_kit_detoxify/.pylintrc .
+            pip install -r passive_data_kit/requirements.txt -r passive_data_kit_external_data/requirements.txt -r passive_data_kit_detoxify/requirements.txt
             pylint passive_data_kit_detoxify
-            pip install -r passive_data_kit/requirements.txt
-            pip install -r passive_data_kit_external_data/requirements.txt
-            pip install -r passive_data_kit_detoxify/requirements.txt
             python manage.py migrate
             python manage.py test
             pylint passive_data_kit
             pylint passive_data_kit_external_data
-            bandit -r .      
+            bandit -r .
       - save_cache:
-          key: venv-38-{{ .Branch }}-{{ checksum "/home/circleci/django/pdk/passive_data_kit_detoxify/requirements.txt" }}
+          key: venv-312-{{ .Branch }}-{{ checksum "/home/circleci/django/pdk/passive_data_kit_detoxify/requirements.txt" }}
+          paths:
+            - "/home/circleci/venv"
+      - store_test_results:
+          path: test-results/
+      - store_artifacts:
+          path: test-reports/
+          destination: python_app
+
+  build-310:
+    docker:
+      - image: cimg/python:3.10
+      - image: cimg/postgres:14.19-postgis
+        auth:
+          username: mydockerhub-user
+          password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
+        environment:
+          POSTGRES_USER: root
+          POSTGRES_DB: circle_test
+          POSTGRES_PASSWORD: ""
+    steps:
+      - checkout
+      - restore_cache:
+          key: venv-310-{{ .Branch }}-{{ checksum "requirements.txt" }}
+      - run:
+          name: Build and validate
+          command: |
+            sudo apt-get update && sudo apt-get install -y gdal-bin rustc cargo
+            python3 -m venv --copies /home/circleci/venv
+            . /home/circleci/venv/bin/activate
+            pip install -U pip
+            pip install wheel
+            pip install -r requirements.txt
+            cd ..
+            mv project passive_data_kit_detoxify
+            mkdir django
+            cd django
+            django-admin startproject pdk
+            mv ../passive_data_kit_detoxify pdk
+            cd pdk
+            git clone https://github.com/audacious-software/PassiveDataKit-Django.git passive_data_kit
+            git clone https://github.com/audacious-software/Passive-Data-Kit-External-Data.git passive_data_kit_external_data
+            cp passive_data_kit_detoxify/circle_settings.py pdk/settings.py
+            cp passive_data_kit_detoxify/.pylintrc .
+            pip install -r passive_data_kit/requirements.txt -r passive_data_kit_external_data/requirements.txt -r passive_data_kit_detoxify/requirements.txt
+            pylint passive_data_kit_detoxify
+            python manage.py migrate
+            python manage.py test
+            pylint passive_data_kit
+            pylint passive_data_kit_external_data
+            bandit -r .
+      - save_cache:
+          key: venv-310-{{ .Branch }}-{{ checksum "/home/circleci/django/pdk/passive_data_kit_detoxify/requirements.txt" }}
+          paths:
+            - "/home/circleci/venv"
+      - store_test_results:
+          path: test-results/
+      - store_artifacts:
+          path: test-reports/
+          destination: python_app
+
+  build-39:
+    docker:
+      - image: cimg/python:3.9
+      - image: cimg/postgres:12.18-postgis
+        auth:
+          username: mydockerhub-user
+          password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
+        environment:
+          POSTGRES_USER: root
+          POSTGRES_DB: circle_test
+          POSTGRES_PASSWORD: ""
+    steps:
+      - checkout
+      - restore_cache:
+          key: venv-39-{{ .Branch }}-{{ checksum "requirements.txt" }}
+      - run:
+          name: Build and validate
+          command: |
+            sudo apt-get update && sudo apt-get install -y gdal-bin rustc cargo
+            python3 -m venv --copies /home/circleci/venv
+            . /home/circleci/venv/bin/activate
+            pip install -U pip
+            pip install wheel
+            pip install -r requirements.txt
+            cd ..
+            mv project passive_data_kit_detoxify
+            mkdir django
+            cd django
+            django-admin startproject pdk
+            mv ../passive_data_kit_detoxify pdk
+            cd pdk
+            git clone https://github.com/audacious-software/PassiveDataKit-Django.git passive_data_kit
+            git clone https://github.com/audacious-software/Passive-Data-Kit-External-Data.git passive_data_kit_external_data
+            cp passive_data_kit_detoxify/circle_settings.py pdk/settings.py
+            cp passive_data_kit_detoxify/.pylintrc .
+            pip install -r passive_data_kit/requirements.txt -r passive_data_kit_external_data/requirements.txt -r passive_data_kit_detoxify/requirements.txt
+            pylint passive_data_kit_detoxify
+            python manage.py migrate
+            python manage.py test
+            pylint passive_data_kit
+            pylint passive_data_kit_external_data
+            bandit -r .
+      - save_cache:
+          key: venv-39-{{ .Branch }}-{{ checksum "/home/circleci/django/pdk/passive_data_kit_detoxify/requirements.txt" }}
           paths:
             - "/home/circleci/venv"
       - store_test_results:
@@ -68,7 +172,7 @@ jobs:
   build-38:
     docker:
       - image: cimg/python:3.8
-      - image: cimg/postgres:9.6-postgis
+      - image: cimg/postgres:12.18-postgis
         auth:
           username: mydockerhub-user
           password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
@@ -83,7 +187,7 @@ jobs:
       - run:
           name: Build and validate
           command: |
-            sudo apt-get update && sudo apt-get install -y gdal-bin
+            sudo apt-get update && sudo apt-get install -y gdal-bin rustc cargo
             python3 -m venv --copies /home/circleci/venv
             . /home/circleci/venv/bin/activate
             pip install -U pip
@@ -93,22 +197,20 @@ jobs:
             mv project passive_data_kit_detoxify
             mkdir django
             cd django
-            django-admin.py startproject pdk
+            django-admin startproject pdk
             mv ../passive_data_kit_detoxify pdk
             cd pdk
             git clone https://github.com/audacious-software/PassiveDataKit-Django.git passive_data_kit
             git clone https://github.com/audacious-software/Passive-Data-Kit-External-Data.git passive_data_kit_external_data
             cp passive_data_kit_detoxify/circle_settings.py pdk/settings.py
             cp passive_data_kit_detoxify/.pylintrc .
+            pip install -r passive_data_kit/requirements.txt -r passive_data_kit_external_data/requirements.txt -r passive_data_kit_detoxify/requirements.txt
             pylint passive_data_kit_detoxify
-            pip install -r passive_data_kit/requirements.txt
-            pip install -r passive_data_kit_external_data/requirements.txt
-            pip install -r passive_data_kit_detoxify/requirements.txt
             python manage.py migrate
             python manage.py test
             pylint passive_data_kit
             pylint passive_data_kit_external_data
-            bandit -r .      
+            bandit -r .
       - save_cache:
           key: venv-38-{{ .Branch }}-{{ checksum "/home/circleci/django/pdk/passive_data_kit_detoxify/requirements.txt" }}
           paths:
@@ -119,9 +221,61 @@ jobs:
           path: test-reports/
           destination: python_app
 
-  build-27:
+  build-37:
     docker:
-      - image: cimg/python:2.7
+      - image: cimg/python:3.7
+      - image: cimg/postgres:12.18-postgis
+        auth:
+          username: mydockerhub-user
+          password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
+        environment:
+          POSTGRES_USER: root
+          POSTGRES_DB: circle_test
+          POSTGRES_PASSWORD: ""
+    steps:
+      - checkout
+      - restore_cache:
+          key: venv-37-{{ .Branch }}-{{ checksum "requirements.txt" }}
+      - run:
+          name: Build and validate
+          command: |
+            sudo apt-get update && sudo apt-get install -y gdal-bin rustc cargo
+            python3 -m venv --copies /home/circleci/venv
+            . /home/circleci/venv/bin/activate
+            pip install -U pip
+            pip install wheel
+            pip install -r requirements.txt
+            cd ..
+            mv project passive_data_kit_detoxify
+            mkdir django
+            cd django
+            django-admin startproject pdk
+            mv ../passive_data_kit_detoxify pdk
+            cd pdk
+            git clone https://github.com/audacious-software/PassiveDataKit-Django.git passive_data_kit
+            git clone https://github.com/audacious-software/Passive-Data-Kit-External-Data.git passive_data_kit_external_data
+            cp passive_data_kit_detoxify/circle_settings.py pdk/settings.py
+            cp passive_data_kit_detoxify/.pylintrc .
+            pip install -r passive_data_kit/requirements.txt -r passive_data_kit_external_data/requirements.txt -r passive_data_kit_detoxify/requirements.txt
+            pylint passive_data_kit_detoxify
+            python manage.py migrate
+            python manage.py test
+            pylint passive_data_kit
+            pylint passive_data_kit_external_data
+            bandit -r .
+      - save_cache:
+          key: venv-37-{{ .Branch }}-{{ checksum "/home/circleci/django/pdk/passive_data_kit_detoxify/requirements.txt" }}
+          paths:
+            - "/home/circleci/venv"
+      - store_test_results:
+          path: test-results/
+      - store_artifacts:
+          path: test-reports/
+          destination: python_app
+
+  build-36:
+    docker:
+      - image: cimg/python:3.6
       - image: cimg/postgres:9.6-postgis
         auth:
           username: mydockerhub-user
@@ -133,38 +287,36 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: venv-27-{{ .Branch }}-{{ checksum "requirements.txt" }}
+          key: venv-36-{{ .Branch }}-{{ checksum "requirements.txt" }}
       - run:
           name: Build and validate
           command: |
-            sudo apt-get update && sudo apt-get install -y gdal-bin
-            virtualenv --copies /home/circleci/venv
+            sudo apt-get update && sudo apt-get install -y gdal-bin rustc cargo
+            python3 -m venv --copies /home/circleci/venv
             . /home/circleci/venv/bin/activate
             pip install -U pip
             pip install wheel
             pip install -r requirements.txt
-            cd ..
+            cd postgres:9.6-postgis..
             mv project passive_data_kit_detoxify
             mkdir django
             cd django
-            django-admin.py startproject pdk
+            django-admin startproject pdk
             mv ../passive_data_kit_detoxify pdk
             cd pdk
             git clone https://github.com/audacious-software/PassiveDataKit-Django.git passive_data_kit
             git clone https://github.com/audacious-software/Passive-Data-Kit-External-Data.git passive_data_kit_external_data
             cp passive_data_kit_detoxify/circle_settings.py pdk/settings.py
             cp passive_data_kit_detoxify/.pylintrc .
+            pip install -r passive_data_kit/requirements.txt -r passive_data_kit_external_data/requirements.txt -r passive_data_kit_detoxify/requirements.txt
             pylint passive_data_kit_detoxify
-            pip install -r passive_data_kit/requirements.txt
-            pip install -r passive_data_kit_external_data/requirements.txt
-            pip install -r passive_data_kit_detoxify/requirements.txt
             python manage.py migrate
             python manage.py test
             pylint passive_data_kit
             pylint passive_data_kit_external_data
-            bandit -r .      
+            bandit -r .
       - save_cache:
-          key: venv-27-{{ .Branch }}-{{ checksum "/home/circleci/django/pdk/passive_data_kit_detoxify/requirements.txt" }}
+          key: venv-36-{{ .Branch }}-{{ checksum "/home/circleci/django/pdk/passive_data_kit_detoxify/requirements.txt" }}
           paths:
             - "/home/circleci/venv"
       - store_test_results:

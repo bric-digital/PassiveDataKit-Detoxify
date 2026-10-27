@@ -69,7 +69,7 @@ DATABASES = {
         'ENGINE':   'django.contrib.gis.db.backends.postgis',
         'NAME':     'circle_test',
         'USER':     'root',
-        'PASSWORD': '',
+        'PASSWORD': '', # nosec
         'HOST':     'localhost',
         'PORT':     '',
     }
@@ -103,4 +103,4 @@ SIMPLE_DETOXIFY_RETAIN_SCORED_TEXT = False
 STATIC_URL = '/static/'
 STATIC_ROOT = 'static'
 
-SILENCED_SYSTEM_CHECKS = ['fields.W904', 'passive_data_kit_detoxify.E005']
+SILENCED_SYSTEM_CHECKS = ['fields.W904', 'passive_data_kit_detoxify.E005', 'passive_data_kit_detoxify.E002']

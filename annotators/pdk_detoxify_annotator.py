@@ -113,10 +113,33 @@ def annotate(content, field_name=None): # pylint: disable=too-many-branches, too
 
 
 def fetch_annotation_fields():
-    labels = []
+    # labels = []
 
-    for model in DETOXIFY_MODELS:
-        labels.append(slugify(model).replace('-', '_'))
+    # for model in DETOXIFY_MODELS:
+    #    labels.append(slugify(model).replace('-', '_'))
+
+    labels = [
+        'unbiased_severe_toxicity',
+        'unbiased_sexual_explicit',
+        'unbiased_obscene',
+        'unbiased_insult',
+        'unbiased_threat',
+        'unbiased_identity_attack',
+        'unbiased_toxicity',
+        'multilingual_severe_toxicity',
+        'multilingual_sexual_explicit',
+        'multilingual_obscene',
+        'multilingual_insult',
+        'multilingual_threat',
+        'multilingual_identity_attack',
+        'multilingual_toxicity',
+        'original_severe_toxicity',
+        'original_obscene',
+        'original_insult',
+        'original_threat',
+        'original_identity_attack',
+        'original_toxicity',
+    ]
 
     return labels
 
