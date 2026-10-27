@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import json
+import traceback
 
 import requests
 
@@ -28,9 +29,26 @@ DEFAULT_FIELD_PRIORITIES = (
 )
 
 DETOXIFY_MODELS = (
-    'original',
-    'unbiased',
-    'multilingual',
+    'multilingual_identity_attack',
+    'multilingual_insult',
+    'multilingual_obscene',
+    'multilingual_severe_toxicity',
+    'multilingual_sexual_explicit',
+    'multilingual_threat',
+    'multilingual_toxicity',
+    'original_identity_attack',
+    'original_insult',
+    'original_obscene',
+    'original_severe_toxicity',
+    'original_threat',
+    'original_toxicity',
+    'unbiased_identity_attack',
+    'unbiased_insult',
+    'unbiased_obscene',
+    'unbiased_severe_toxicity',
+    'unbiased_sexual_explicit',
+    'unbiased_threat',
+    'unbiased_toxicity',
 )
 
 def annotate(content, field_name=None): # pylint: disable=too-many-branches, too-many-statements, too-many-locals
@@ -104,59 +122,62 @@ def fetch_annotation_fields():
 
 
 def fetch_annotations(properties, initial_field=None): # pylint: disable=too-many-return-statements, too-many-branches
-    if isinstance(properties, dict) is False:
-        return None
-
-    field_priorities = DEFAULT_FIELD_PRIORITIES
-
     try:
-        field_priorities = settings.PDK_CONTENT_ANALYSIS_FIELD_PRIORITIES
-    except AttributeError:
-        pass
+        if isinstance(properties, dict) is False:
+            return None
 
-    if initial_field is None:
-        for field in field_priorities:
-            sentiment_key = 'pdk_detoxify_' + field
+        field_priorities = DEFAULT_FIELD_PRIORITIES
 
-            if sentiment_key in properties:
-                annotations = {}
+        try:
+            field_priorities = settings.PDK_CONTENT_ANALYSIS_FIELD_PRIORITIES
+        except AttributeError:
+            pass
 
-                for model in properties[sentiment_key]:
-                    for label in properties[sentiment_key][model]:
-                        annotations[('%s_%s' % (model, label)).lower()] = properties.get(sentiment_key, {}).get(model, {}).get(label, '')
+        if initial_field is None:
+            for field in field_priorities:
+                sentiment_key = 'pdk_detoxify_' + field
 
-                return annotations
+                if sentiment_key in properties:
+                    annotations = {}
 
-            annotations = fetch_annotations(properties, field)
+                    for model in properties[sentiment_key]:
+                        for label in properties[sentiment_key][model]:
+                            annotations[('%s_%s' % (model, label)).lower()] = properties.get(sentiment_key, {}).get(model, {}).get(label, '')
 
-            if annotations is not None:
-                return annotations
-    else:
-        toxic_scores_key = 'pdk_detoxify_' + initial_field
+                    return annotations
 
-        if sentiment_key in properties:
-            annotations = {}
-
-            for model in properties.get(toxic_scores_key, {}):
-                for label in properties.get(toxic_scores_key, {}).get(model, {}):
-                    annotations[('%s_%s' % (model, label)).lower()] = properties.get(sentiment_key, {}).get(model, {}).get(label, '')
-
-            return annotations
-
-        for key in properties:
-            value = properties[key]
-
-            if isinstance(value, dict):
-                annotations = fetch_annotations(value, initial_field)
+                annotations = fetch_annotations(properties, field)
 
                 if annotations is not None:
                     return annotations
+        else:
+            toxic_scores_key = 'pdk_detoxify_' + initial_field
 
-            elif isinstance(value, list):
-                for item in value:
-                    annotations = fetch_annotations(item, initial_field)
+            if toxic_scores_key in properties:
+                annotations = {}
+
+                for model in properties.get(toxic_scores_key, {}):
+                    for label in properties.get(toxic_scores_key, {}).get(model, {}):
+                        annotations[('%s_%s' % (model, label)).lower()] = properties.get(toxic_scores_key, {}).get(model, {}).get(label, '')
+
+                return annotations
+
+            for key in properties:
+                value = properties[key]
+
+                if isinstance(value, dict):
+                    annotations = fetch_annotations(value, initial_field)
 
                     if annotations is not None:
                         return annotations
+
+                elif isinstance(value, list):
+                    for item in value:
+                        annotations = fetch_annotations(item, initial_field)
+
+                        if annotations is not None:
+                            return annotations
+    except:
+        traceback.print_exc()
 
     return None
