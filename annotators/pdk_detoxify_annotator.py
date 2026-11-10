@@ -3,7 +3,6 @@
 from __future__ import print_function
 
 import json
-import traceback
 
 import requests
 
@@ -145,62 +144,59 @@ def fetch_annotation_fields():
 
 
 def fetch_annotations(properties, initial_field=None): # pylint: disable=too-many-return-statements, too-many-branches
+    if isinstance(properties, dict) is False:
+        return None
+
+    field_priorities = DEFAULT_FIELD_PRIORITIES
+
     try:
-        if isinstance(properties, dict) is False:
-            return None
+        field_priorities = settings.PDK_CONTENT_ANALYSIS_FIELD_PRIORITIES
+    except AttributeError:
+        pass
 
-        field_priorities = DEFAULT_FIELD_PRIORITIES
+    if initial_field is None:
+        for field in field_priorities:
+            sentiment_key = 'pdk_detoxify_' + field
 
-        try:
-            field_priorities = settings.PDK_CONTENT_ANALYSIS_FIELD_PRIORITIES
-        except AttributeError:
-            pass
-
-        if initial_field is None:
-            for field in field_priorities:
-                sentiment_key = 'pdk_detoxify_' + field
-
-                if sentiment_key in properties:
-                    annotations = {}
-
-                    for model in properties[sentiment_key]:
-                        for label in properties[sentiment_key][model]:
-                            annotations[('%s_%s' % (model, label)).lower()] = properties.get(sentiment_key, {}).get(model, {}).get(label, '')
-
-                    return annotations
-
-                annotations = fetch_annotations(properties, field)
-
-                if annotations is not None:
-                    return annotations
-        else:
-            toxic_scores_key = 'pdk_detoxify_' + initial_field
-
-            if toxic_scores_key in properties:
+            if sentiment_key in properties:
                 annotations = {}
 
-                for model in properties.get(toxic_scores_key, {}):
-                    for label in properties.get(toxic_scores_key, {}).get(model, {}):
-                        annotations[('%s_%s' % (model, label)).lower()] = properties.get(toxic_scores_key, {}).get(model, {}).get(label, '')
+                for model in properties[sentiment_key]:
+                    for label in properties[sentiment_key][model]:
+                        annotations[('%s_%s' % (model, label)).lower()] = properties.get(sentiment_key, {}).get(model, {}).get(label, '')
 
                 return annotations
 
-            for key in properties:
-                value = properties[key]
+            annotations = fetch_annotations(properties, field)
 
-                if isinstance(value, dict):
-                    annotations = fetch_annotations(value, initial_field)
+            if annotations is not None:
+                return annotations
+    else:
+        toxic_scores_key = 'pdk_detoxify_' + initial_field
+
+        if toxic_scores_key in properties:
+            annotations = {}
+
+            for model in properties.get(toxic_scores_key, {}):
+                for label in properties.get(toxic_scores_key, {}).get(model, {}):
+                    annotations[('%s_%s' % (model, label)).lower()] = properties.get(toxic_scores_key, {}).get(model, {}).get(label, '')
+
+            return annotations
+
+        for key in properties:
+            value = properties[key]
+
+            if isinstance(value, dict):
+                annotations = fetch_annotations(value, initial_field)
+
+                if annotations is not None:
+                    return annotations
+
+            elif isinstance(value, list):
+                for item in value:
+                    annotations = fetch_annotations(item, initial_field)
 
                     if annotations is not None:
                         return annotations
-
-                elif isinstance(value, list):
-                    for item in value:
-                        annotations = fetch_annotations(item, initial_field)
-
-                        if annotations is not None:
-                            return annotations
-    except:
-        traceback.print_exc()
 
     return None
